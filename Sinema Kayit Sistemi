@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-// BaseEntity Class
 abstract class BaseEntity {
     private int id;
     private String name;
@@ -36,7 +35,6 @@ abstract class BaseEntity {
     public abstract void BilgiGoster();
 }
 
-// Musteri Class
 class Musteri extends BaseEntity {
     public Musteri(int id, String name) {
         super(id, name);
@@ -48,10 +46,9 @@ class Musteri extends BaseEntity {
     }
 }
 
-// Film Class
 class Film {
     private String name;
-    private int duration; // in minutes
+    private int duration;
     private String genre;
 
     public Film(String name, int duration, String genre) {
@@ -77,7 +74,6 @@ class Film {
     }
 }
 
-// Salon Class
 class Salon extends BaseEntity {
     private List<Film> films;
     private List<Musteri> customers;
@@ -110,38 +106,34 @@ class Salon extends BaseEntity {
     }
 }
 
-// IKayit Interface
 interface IKayit {
-    void kaydet(Object obj, String fileName);
-    List<?> oku(String fileName, Class<?> clazz);
+    <T> void kaydet(List<T> list, String fileName);
+    <T> List<T> oku(String fileName, Class<T> clazz);
 }
 
-// JsonHelper Class
 class JsonHelper implements IKayit {
     private final Gson gson = new Gson();
 
     @Override
-    public void kaydet(Object obj, String fileName) {
+    public <T> void kaydet(List<T> list, String fileName) {
         try (FileWriter writer = new FileWriter(fileName)) {
-            gson.toJson(obj, writer);
+            gson.toJson(list, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public List<?> oku(String fileName, Class<?> clazz) {
+    public <T> List<T> oku(String fileName, Class<T> clazz) {
         try (Reader reader = new FileReader(fileName)) {
             Type type = TypeToken.getParameterized(List.class, clazz).getType();
             return gson.fromJson(reader, type);
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            return new ArrayList<>();
         }
     }
 }
 
-// Main Class
 public class Main {
     public static void main(String[] args) {
         JsonHelper jsonHelper = new JsonHelper();
@@ -158,36 +150,42 @@ public class Main {
 
         switch (secim) {
             case 1:
+                List<Musteri> musteriList = jsonHelper.oku("Musteri.json", Musteri.class);
                 System.out.println("Müşteri ID:");
                 int musteriId = scanner.nextInt();
                 scanner.nextLine();
                 System.out.println("Müşteri Adı:");
                 String musteriAdi = scanner.nextLine();
-                Musteri musteri = new Musteri(musteriId, musteriAdi);
-                jsonHelper.kaydet(musteri, "Musteri.json");
+                musteriList.add(new Musteri(musteriId, musteriAdi));
+                jsonHelper.kaydet(musteriList, "Musteri.json");
+                System.out.println("Müşteri kaydedildi.");
                 break;
             case 2:
+                List<Film> filmList = jsonHelper.oku("Film.json", Film.class);
                 System.out.println("Film Adı:");
                 String filmAdi = scanner.nextLine();
-                System.out.println("Film Süre (dk):");
+                System.out.println("Film Süresi (dk):");
                 int filmSure = scanner.nextInt();
                 scanner.nextLine();
                 System.out.println("Film Türü:");
                 String filmTuru = scanner.nextLine();
-                Film film = new Film(filmAdi, filmSure, filmTuru);
-                jsonHelper.kaydet(film, "Film.json");
+                filmList.add(new Film(filmAdi, filmSure, filmTuru));
+                jsonHelper.kaydet(filmList, "Film.json");
+                System.out.println("Film kaydedildi.");
                 break;
             case 3:
+                List<Salon> salonList = jsonHelper.oku("Salon.json", Salon.class);
                 System.out.println("Salon ID:");
                 int salonId = scanner.nextInt();
                 scanner.nextLine();
                 System.out.println("Salon Adı:");
                 String salonAdi = scanner.nextLine();
-                Salon salon = new Salon(salonId, salonAdi);
-                jsonHelper.kaydet(salon, "Salon.json");
+                salonList.add(new Salon(salonId, salonAdi));
+                jsonHelper.kaydet(salonList, "Salon.json");
+                System.out.println("Salon kaydedildi.");
                 break;
             default:
-                System.out.println("Geçersiz Seçim!");
+                System.out.println("Geçersiz seçim!");
         }
     }
 }
