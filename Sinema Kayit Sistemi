@@ -1,0 +1,193 @@
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.*;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+// BaseEntity Class
+abstract class BaseEntity {
+    private int id;
+    private String name;
+
+    public BaseEntity(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public abstract void BilgiGoster();
+}
+
+// Musteri Class
+class Musteri extends BaseEntity {
+    public Musteri(int id, String name) {
+        super(id, name);
+    }
+
+    @Override
+    public void BilgiGoster() {
+        System.out.println("Müşteri ID: " + getId() + ", Ad: " + getName());
+    }
+}
+
+// Film Class
+class Film {
+    private String name;
+    private int duration; // in minutes
+    private String genre;
+
+    public Film(String name, int duration, String genre) {
+        this.name = name;
+        this.duration = duration;
+        this.genre = genre;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void BilgiGoster() {
+        System.out.println("Film Adı: " + name + ", Süre: " + duration + " dk, Tür: " + genre);
+    }
+}
+
+// Salon Class
+class Salon extends BaseEntity {
+    private List<Film> films;
+    private List<Musteri> customers;
+
+    public Salon(int id, String name) {
+        super(id, name);
+        this.films = new ArrayList<>();
+        this.customers = new ArrayList<>();
+    }
+
+    public void addFilm(Film film) {
+        films.add(film);
+    }
+
+    public void addMusteri(Musteri musteri) {
+        customers.add(musteri);
+    }
+
+    @Override
+    public void BilgiGoster() {
+        System.out.println("Salon ID: " + getId() + ", Ad: " + getName());
+        System.out.println("Gösterilen Filmler:");
+        for (Film film : films) {
+            film.BilgiGoster();
+        }
+        System.out.println("Kayıtlı Müşteriler:");
+        for (Musteri musteri : customers) {
+            musteri.BilgiGoster();
+        }
+    }
+}
+
+// IKayit Interface
+interface IKayit {
+    void kaydet(Object obj, String fileName);
+    List<?> oku(String fileName, Class<?> clazz);
+}
+
+// JsonHelper Class
+class JsonHelper implements IKayit {
+    private final Gson gson = new Gson();
+
+    @Override
+    public void kaydet(Object obj, String fileName) {
+        try (FileWriter writer = new FileWriter(fileName)) {
+            gson.toJson(obj, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<?> oku(String fileName, Class<?> clazz) {
+        try (Reader reader = new FileReader(fileName)) {
+            Type type = TypeToken.getParameterized(List.class, clazz).getType();
+            return gson.fromJson(reader, type);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
+
+// Main Class
+public class Main {
+    public static void main(String[] args) {
+        JsonHelper jsonHelper = new JsonHelper();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Sinema Müşteri Kayıt Sistemi");
+        System.out.println("1. Yeni Müşteri Ekle");
+        System.out.println("2. Yeni Film Ekle");
+        System.out.println("3. Yeni Salon Ekle");
+        System.out.println("Seçiminizi Yapınız:");
+
+        int secim = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (secim) {
+            case 1:
+                System.out.println("Müşteri ID:");
+                int musteriId = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Müşteri Adı:");
+                String musteriAdi = scanner.nextLine();
+                Musteri musteri = new Musteri(musteriId, musteriAdi);
+                jsonHelper.kaydet(musteri, "Musteri.json");
+                break;
+            case 2:
+                System.out.println("Film Adı:");
+                String filmAdi = scanner.nextLine();
+                System.out.println("Film Süre (dk):");
+                int filmSure = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Film Türü:");
+                String filmTuru = scanner.nextLine();
+                Film film = new Film(filmAdi, filmSure, filmTuru);
+                jsonHelper.kaydet(film, "Film.json");
+                break;
+            case 3:
+                System.out.println("Salon ID:");
+                int salonId = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Salon Adı:");
+                String salonAdi = scanner.nextLine();
+                Salon salon = new Salon(salonId, salonAdi);
+                jsonHelper.kaydet(salon, "Salon.json");
+                break;
+            default:
+                System.out.println("Geçersiz Seçim!");
+        }
+    }
+}
